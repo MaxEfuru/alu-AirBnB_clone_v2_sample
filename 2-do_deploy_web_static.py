@@ -1,34 +1,37 @@
-#!/usr/bin/python3
-from fabric.api import env, run, put
-import os
-# using fabric to automate
+#!/usr/bin/env python3
+"""
+Distributes an archive to web servers using the do_deploy function.
+"""
 
-env.hosts = ['54.242.117.7', '54.226.19.77']
-env.user = 'ubuntu'
-env.key_filename = '/.ssh'
+import os
+from fabric.api import run, put, env
+
+env.hosts = ['<IP web-01>', '<IP web-02>']
 
 
 def do_deploy(archive_path):
     """
-    distribute zip
+    Distributes an archive to web servers using the do_deploy function.
     """
+
+    # Check if the file exists
     if not os.path.exists(archive_path):
         return False
-    archive_name = os.path.basename(archive_path)
-    archive_name_without_ext = os.path.splitext(archive_name)[0]
-    put(archive_path, '/tmp/')
-    run("mkdir -p /data/web_static/releases/{}/"
-        .format(archive_name_without_ext))
-    run("tar -xzf /tmp/{} -C /data/web_static/releases/{}/"
-        .format(archive_name, archive_name_without_ext))
-    run("rm /tmp/{}".format(archive_name))
-    run("mv /data/web_static/releases/{}/web_static/* \
-         /data/web_static/releases/{}/"
-        .format(archive_name_without_ext, archive_name_without_ext))
-    run("rm -rf /data/web_static/releases/{}/web_static"
-        .format(archive_name_without_ext))
-    run("rm -rf /data/web_static/current")
-    run("ln -s /data/web_static/releases/{}/ /data/web_static/current"
-        .format(archive_name_without_ext))
+
+    # Upload the archive to the /tmp/ directory of the web server
+    filename = os.path.basename(archive_path)
+    put(archive_path, '/tmp/{}'.format(filename))
+
+    # Uncompress the archive to the folder /data/web_static/releases/<archive filename without extension> on the web server
+    directory_name = filename.split('.')[0]
+    run('sudo mkdir -p /data/web_static/releases/{}/'.format(directory_name))
+    run('sudo tar -xzf /tmp/{} -C /data/web_static/releases/{}/'.format(filename, directory_name))
+    run('sudo rm /tmp/{}'.format(filename))
+
+    # Delete the symbolic link /data/web_static/current from the web server
+    run('sudo rm -f /data/web_static/current')
+
+    # Create a new symbolic link linked to the new version of your code (/data/web_static/releases/<archive filename without extension>)
+    run('sudo ln -s /data/web_static/releases/{}/ /data/web_static/current'.format(directory_name))
 
     return True
