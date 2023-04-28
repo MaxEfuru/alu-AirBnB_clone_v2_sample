@@ -1,37 +1,45 @@
 #!/usr/bin/python3
-"""
-Distributes an archive to web servers using the do_deploy function.
-"""
+"""Fabric script to distribute an archive to web servers"""
 
-import os
-from fabric.api import run, put, env
+from fabric.api import env, put, run
+from os import path
 
 env.hosts = ['<IP web-01>', '<IP web-02>']
 
 
 def do_deploy(archive_path):
-    """
-    Distributes an archive to web servers using the do_deploy function.
-    """
-
-    # Check if the file exists
-    if not os.path.exists(archive_path):
+    """Distributes an archive to web servers"""
+    if not path.exists(archive_path):
         return False
 
-    # Upload the archive to the /tmp/ directory of the web server
-    filename = os.path.basename(archive_path)
-    put(archive_path, '/tmp/{}'.format(filename))
+    try:
+        # Upload archive to web server
+        put(archive_path, '/tmp/')
+        archive_filename = archive_path.split('/')[-1]
+        archive_basename = archive_filename.split('.')[0]
 
-    # Uncompress the archive to the folder /data/web_static/releases/<archive filename without extension> on the web server
-    directory_name = filename.split('.')[0]
-    run('sudo mkdir -p /data/web_static/releases/{}/'.format(directory_name))
-    run('sudo tar -xzf /tmp/{} -C /data/web_static/releases/{}/'.format(filename, directory_name))
-    run('sudo rm /tmp/{}'.format(filename))
+        # Create directory to uncompress archive
+        run('mkdir -p /data/web_static/releases/{}'.format(archive_basename))
 
-    # Delete the symbolic link /data/web_static/current from the web server
-    run('sudo rm -f /data/web_static/current')
+        # Uncompress archive to new directory
+        run('tar -xzf /tmp/{} -C /data/web_static/releases/{}/'
+            .format(archive_filename, archive_basename))
 
-    # Create a new symbolic link linked to the new version of your code (/data/web_static/releases/<archive filename without extension>)
-    run('sudo ln -s /data/web_static/releases/{}/ /data/web_static/current'.format(directory_name))
+        # Remove archive from web server
+        run('rm /tmp/{}'.format(archive_filename))
 
-    return True
+        # Move contents to new directory and delete old directory
+        run('mv /data/web_static/releases/{}/web_static/* \
+             /data/web_static/releases/{}/'.format(archive_basename, archive_basename))
+        run('rm -rf /data/web_static/releases/{}/web_static'
+            .format(archive_basename))
+
+        # Remove old symbolic link and create new one
+        run('rm -rf /data/web_static/current')
+        run('ln -s /data/web_static/releases/{}/ /data/web_static/current'
+            .format(archive_basename))
+
+        return True
+
+    except:
+        return False
