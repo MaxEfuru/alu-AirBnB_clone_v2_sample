@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 """
 Distributes an archive to web servers using the do_deploy function.
 """
