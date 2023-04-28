@@ -9,8 +9,7 @@ def do_pack():
     of your AirBnB Clone repo.
     """
     now = datetime.now()
-    archive_name = "web_static_{}{}{}{}{}{}.tgz"
-    .format(now.year, now.month, now.day, now.hour, now.minute, now.second)
+    archive_name = "web_static_{}{}{}{}{}{}.tgz".format(now.year, now.month, now.day, now.hour, now.minute, now.second)
     local("mkdir -p versions")
     result = local("tar -cvzf versions/{} web_static".format(archive_name))
     if result.failed:
