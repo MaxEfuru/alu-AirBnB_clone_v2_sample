@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# code creat directory structures install nginx
+# code create directory structures and install nginx
 
 if ! which nginx > /dev/null; then
 	sudo apt-get update
