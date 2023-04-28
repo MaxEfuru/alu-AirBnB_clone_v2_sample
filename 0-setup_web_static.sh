@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-
 # Install Nginx if it is not already installed
+
 if [ $(dpkg-query -W -f='${Status}' nginx 2>/dev/null | grep -c "ok installed") -eq 0 ];
 then
   sudo apt-get update
