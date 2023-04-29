@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# setting up everything 
 
 # Install Nginx if not already installed
 if [ ! -x "$(command -v nginx)" ]; then
