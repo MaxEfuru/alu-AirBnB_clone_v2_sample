@@ -1,35 +1,30 @@
 #!/usr/bin/env bash
 #Settinng up server
 
-# Install Nginx if it is not already installed
-if [ $(dpkg-query -W -f='${Status}' nginx 2>/dev/null | grep -c "ok installed") -eq 0 ];
-then
-  sudo apt-get update
-  sudo apt-get -y install nginx
+
+# Install Nginx if not already installed
+if [ ! -x "$(command -v nginx)" ]; then
+    sudo apt-get update
+    sudo apt-get -y install nginx
 fi
 
-# Create the necessary folders if they don't exist
-sudo mkdir -p /data/web_static/{releases,test,shared}
+# Create required directories and files
+sudo mkdir -p /data/web_static/releases/test /data/web_static/shared
+sudo touch /data/web_static/releases/test/index.html
+echo "Hello, World!" | sudo tee /data/web_static/releases/test/index.html
 
-# Create a fake HTML file to test Nginx configuration
-echo "<html>
-  <head>
-    <title>Testing Nginx</title>
-  </head>
-  <body>
-    <p>Testing Nginx configuration</p>
-  </body>
-</html>" | sudo tee /data/web_static/releases/test/index.html
+# Create symbolic link if it doesn't exist
+if [ ! -L /data/web_static/current ]; then
+    sudo ln -s /data/web_static/releases/test /data/web_static/current
+fi
 
-# Create symbolic link
-sudo rm -rf /data/web_static/current
-sudo ln -sf /data/web_static/releases/test /data/web_static/current
-
-# Give ownership of /data/ folder to ubuntu user and group recursively
+# Set ownership of /data/ folder to ubuntu user and group
 sudo chown -R ubuntu:ubuntu /data/
 
 # Update Nginx configuration
-sudo sed -i '/listen 80 default_server;/a \\tlocation /hbnb_static/ {\n\t\talias /data/web_static/current/;\n\t}' /etc/nginx/sites-available/default
+sudo sed -i '39i\\tlocation /hbnb_static {\n\t\talias /data/web_static/current/;\n\t}\n' /etc/nginx/sites-available/default
 
 # Restart Nginx
 sudo service nginx restart
+
+exit 0
